@@ -1,0 +1,12 @@
+{
+  "name": "realtimechat_frontend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm install --prefix Chat_app_Backend && npm install --prefix Chat_app_Frontend && npm run build --prefix Chat_app_Frontend",
+    "start": "npm run start --prefix Chat_app_Backend"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
