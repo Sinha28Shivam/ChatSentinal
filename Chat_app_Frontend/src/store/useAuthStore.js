@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import { use } from "react";
 
-const BASE_URL = import.meta.env.MODE == "development" ? "http://localhost:3002/api/v0" : "https://chatsentinal.onrender.com";
+const BASE_URL = import.meta.env.MODE == "development" ? "http://localhost:3002" : "https://chatsentinal.onrender.com";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -73,7 +73,7 @@ export const useAuthStore = create((set, get) => ({
       set({ authUser: null });
       toast.success("Logged out successfully!");
       // console.log("Logged out successfully!");
-      get().diconnectSocket();
+      get().disconnectSocket();
       
     } catch (error) {
       toast.error(error.response.data.message || "Something went wrong!");
@@ -115,8 +115,8 @@ export const useAuthStore = create((set, get) => ({
     });
 
   },
-  diconnectSocket: () => {
-    if(get().socket?.connected) get().socket.diconnect();
+  disconnectSocket: () => {
+    if(get().socket?.connected) get().socket.disconnect();
 
   }
 
