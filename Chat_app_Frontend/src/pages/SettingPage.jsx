@@ -1,17 +1,27 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react';
 import { THEMES } from "../constants";
 import { useThemeStore } from "../store/useThemeStore";
 import { Send } from "lucide-react";
+import { useAuthStore } from '../store/useAuthStore';
 
 const PREVIEW_MESSAGES = [
   { id: 1, content: "Hey! How's it going?", isSent: false },
   { id: 2, content: "I am doing great! just working on some new features", isSent: true },
-
 ];
 
 const SettingPage = () => {
   const { theme, setTheme } = useThemeStore();
+  const { authUser, DeleteAccount, isDeletingAccount } = useAuthStore(); // Simulate user auth state
   
+  const handleDeleteAccount = async () => {
+    const confirmDelete = confirm("Are you sure you want to delete your account?");
+    if (!confirmDelete) return;
+  
+    await DeleteAccount();
+    window.location.href = "/"; // redirect to homepage after deletion
+  };
+
+
   return (
     <div className="h-screen container mx-auto px-4 pt-20 max-w-5xl">
       <div className="space-y-6">
@@ -45,14 +55,11 @@ const SettingPage = () => {
           ))}
         </div>
 
-        {/* Preview Section */}
         <h3 className="text-lg font-semibold mb-3">Preview</h3>
         <div className="rounded-xl border border-base-300 overflow-hidden bg-base-100 shadow-lg">
           <div className="p-4 bg-base-200">
             <div className="max-w-lg mx-auto">
-              {/* Mock Chat UI */}
               <div className="bg-base-100 rounded-xl shadow-sm overflow-hidden">
-                {/* Chat Header */}
                 <div className="px-4 py-3 border-b border-base-300 bg-base-100">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-content font-medium">
@@ -65,7 +72,6 @@ const SettingPage = () => {
                   </div>
                 </div>
 
-                {/* Chat Messages */}
                 <div className="p-4 space-y-4 min-h-[200px] max-h-[200px] overflow-y-auto bg-base-100">
                   {PREVIEW_MESSAGES.map((message) => (
                     <div
@@ -92,7 +98,6 @@ const SettingPage = () => {
                   ))}
                 </div>
 
-                {/* Chat Input */}
                 <div className="p-4 border-t border-base-300 bg-base-100">
                   <div className="flex gap-2">
                     <input
@@ -111,9 +116,23 @@ const SettingPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Delete Account Button */}
+        {authUser && (
+  <div className="pt-6">
+    <button
+      onClick={handleDeleteAccount}
+      disabled={isDeletingAccount}
+      className="btn btn-error w-full"
+    >
+      {isDeletingAccount ? "Deleting..." : "Delete Account"}
+    </button>
+  </div>
+)}
+
       </div>
     </div>
   );
-}
+};
 
 export default SettingPage;
