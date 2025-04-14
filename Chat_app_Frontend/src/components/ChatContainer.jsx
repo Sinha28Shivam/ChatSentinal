@@ -1,11 +1,12 @@
+import { motion, AnimatePresence } from "framer-motion";
 import { useChatStore } from "../store/useChatStore";
 import { useEffect, useRef } from "react";
-
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { useAuthStore } from "../store/useAuthStore";
 import { formatMessageTime } from "../lib/utils";
+import { CornerUpRight, Image as ImageIcon } from "lucide-react";
 
 const ChatContainer = () => {
   const {
@@ -37,7 +38,7 @@ const ChatContainer = () => {
 
   if (isMessagesLoading) {
     return (
-      <div className="flex-1 flex flex-col bg-gray-900 text-white">
+      <div className="flex-1 flex flex-col bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
         <ChatHeader />
         <MessageSkeleton />
         <MessageInput />
@@ -46,52 +47,102 @@ const ChatContainer = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-gradient-to-tr from-gray-900 via-black to-gray-800 text-white">
+    <div className="flex-1 flex flex-col bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       <ChatHeader />
 
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-5">
-        {messages.map((message) => {
-          const isMe = message.senderId === authUser._id;
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3">
+        <AnimatePresence>
+          {messages.map((message) => {
+            const isMe = message.senderId === authUser._id;
+            const isImageMessage = !!message.image;
 
-          return (
-            <div
-              key={message._id}
-              className={`flex items-end gap-2 ${isMe ? "justify-end" : "justify-start"}`}
-            >
-              {/* Avatar */}
-              <div className="w-10 h-10 rounded-full overflow-hidden border border-white/20 shadow-md">
-                <img
-                  src={
-                    isMe
-                      ? authUser.profilePic || "/avatar.png"
-                      : selectedUser?.profilePic || "/avatar.png"
-                  }
-                  alt="Avatar"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              {/* Bubble */}
-              <div
-                className={`rounded-2xl px-4 py-2 max-w-xs shadow-md transform transition-all hover:scale-105 ${
-                  isMe ? "bg-blue-600 text-white" : "bg-gray-200 text-black"
-                }`}
+            return (
+              <motion.div
+                key={message._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className={`flex items-end gap-3 ${isMe ? "justify-end" : "justify-start"}`}
               >
-                {message.image && (
-                  <img
-                    src={message.image}
-                    alt="attachment"
-                    className="rounded-md mb-2 max-w-full"
-                  />
+                {/* Avatar (only shown for received messages) */}
+                {!isMe && (
+                  <motion.div 
+                    whileHover={{ scale: 1.05 }}
+                    className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/50 shadow-lg"
+                  >
+                    <img
+                      src={selectedUser?.profilePic || "/avatar.png"}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  </motion.div>
                 )}
-                {message.text && <p>{message.text}</p>}
-                <p className="text-xs mt-1 opacity-60">
-                  {formatMessageTime(message.createdAt)}
-                </p>
-              </div>
-            </div>
-          );
-        })}
+
+                {/* Message Bubble */}
+                <motion.div
+                  whileHover={{ scale: 1.01 }}
+                  className={`relative rounded-2xl px-4 py-3 max-w-xs lg:max-w-md shadow-lg ${
+                    isMe 
+                      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white" 
+                      : "bg-gray-800 text-white border border-gray-700"
+                  }`}
+                >
+                  {/* Image attachment */}
+                  {isImageMessage && (
+                    <div className="mb-2 relative group">
+                      <img
+                        src={message.image}
+                        alt="attachment"
+                        className="rounded-lg w-full h-auto max-h-60 object-cover border border-gray-700"
+                      />
+                      <div className="absolute top-2 left-2 bg-black/50 rounded-full p-1">
+                        <ImageIcon className="size-4 text-white" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Text content */}
+                  {message.text && (
+                    <p className={`${isImageMessage ? 'mt-2' : ''}`}>
+                      {message.text}
+                    </p>
+                  )}
+
+                  {/* Message metadata */}
+                  <div className={`flex items-center justify-end gap-1 mt-1 ${isMe ? 'text-blue-100' : 'text-gray-400'}`}>
+                    <span className="text-xs">
+                      {formatMessageTime(message.createdAt)}
+                    </span>
+                    {isMe && (
+                      <span className={message.read ? "text-blue-300" : "text-gray-400"}>
+                        ✓
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Decorative corner */}
+                  {!isMe && (
+                    <div className="absolute -left-1.5 bottom-0 w-3 h-3 bg-gray-800 border-l border-b border-gray-700 transform rotate-45"></div>
+                  )}
+                </motion.div>
+
+                {/* Avatar (only shown for sent messages) */}
+                {isMe && (
+                  <motion.div 
+                    whileHover={{ scale: 1.05 }}
+                    className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/50 shadow-lg"
+                  >
+                    <img
+                      src={authUser.profilePic || "/avatar.png"}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  </motion.div>
+                )}
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
         <div ref={messageEndRef} />
       </div>
 
