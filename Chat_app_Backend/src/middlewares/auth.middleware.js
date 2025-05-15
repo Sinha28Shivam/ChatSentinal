@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
+import { getRedisClient } from "../redisClient/redisClient.js";
 
 export const protectRoute = async(req, res, next)=> {
     try {
@@ -11,6 +12,13 @@ export const protectRoute = async(req, res, next)=> {
         const decoded = jwt.verify(token, process.env.JWT_SECRET)
         if(!decoded) {
             return res.status(401).json({ message: "Unauthorized - Invalid User" });
+        }
+
+        const redisClient = await getRedisClient();
+        // Check if the token is in redis
+        const cachedToken = await redisClient.get(`token:${decoded.userId}`);
+        if(!cachedToken || cachedToken !== token){
+            return res.status(401).json({ message: "Unauthorized - session expired" });
         }
 
         const user = await User.findById(decoded.userId).select("-password");

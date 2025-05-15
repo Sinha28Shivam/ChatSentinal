@@ -1,15 +1,11 @@
-import { useState } from 'react';
-import React from 'react';
-import { useAuthStore } from '../store/useAuthStore';
+import React, { useState } from 'react';
+import { Eye, EyeOff, Mail, Lock, Loader2, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Eye, EyeOff, Loader2, Lock, Mail, MessageSquare } from 'lucide-react';
+import { useAuthStore } from '../store/useAuthStore';
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const { login, isLoggingIn } = useAuthStore();
 
   const handleSubmit = async (e) => {
@@ -18,82 +14,85 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-tr from-[#0f2027] via-[#203a43] to-[#2c5364]">
-      {/* Background Effects */}
-      <div className="absolute top-[-100px] left-[-100px] w-96 h-96 bg-purple-500 opacity-30 blur-3xl rounded-full animate-pulse z-0" />
-      <div className="absolute bottom-[-100px] right-[-100px] w-96 h-96 bg-pink-500 opacity-30 blur-3xl rounded-full animate-pulse z-0" />
-
-      {/* Form Card */}
-      <div className="relative z-10 w-full max-w-md bg-white/10 backdrop-blur-md rounded-3xl p-10 shadow-2xl border border-white/20 transition-transform duration-300 hover:scale-[1.02]">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 px-4">
+      <div className="w-full max-w-md bg-white/10 backdrop-blur-lg border border-white/20 p-8 rounded-3xl shadow-2xl relative z-10 animate-fadeIn">
+        {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex flex-col items-center gap-2 group">
-            <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
-              <MessageSquare className="w-6 h-6 text-primary" />
-            </div>
-            <h1 className="text-3xl font-bold text-white mt-2">Welcome Back</h1>
-            <p className="text-white/60">Sign in to your account</p>
+          <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+            <MessageSquare className="text-white w-6 h-6" />
           </div>
+          <h2 className="text-3xl font-bold text-white">Welcome Back</h2>
+          <p className="text-white/60">Login to continue chatting</p>
         </div>
 
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Email */}
-          <div>
-            <label className="block mb-1 text-white font-medium">Email</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
-              <input
-                type="email"
-                placeholder="you@example.com"
-                className="w-full py-3 pl-10 pr-4 rounded-xl bg-white/10 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-primary"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
+          <div className="relative">
+            <input
+              type="email"
+              id="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="peer w-full bg-white/10 text-white border border-white/30 rounded-xl pt-6 pb-2 px-10 placeholder-transparent focus:outline-none focus:ring-2 focus:ring-white/60 transition-all"
+              placeholder="Email"
+              required
+            />
+            <Mail className="absolute left-3 top-1/2 text-white/40 peer-placeholder-shown:translate-y-0 -translate-y-3 transition-transform" />
+            <label
+              htmlFor="email"
+              className="absolute left-10 top-2 text-white/60 text-xs transition-all 
+                        peer-placeholder-shown:text-base peer-placeholder-shown:text-white/40 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2
+                        peer-focus:top-2 peer-focus:text-xs peer-focus:text-white peer-focus:-translate-y-0"
+            >
+              Email Address
+            </label>
           </div>
 
           {/* Password */}
-          <div>
-            <label className="block mb-1 text-white font-medium">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                className="w-full py-3 pl-10 pr-10 rounded-xl bg-white/10 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-primary"
-
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff /> : <Eye />}
-              </button>
-            </div>
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              id="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="peer w-full bg-white/10 text-white border border-white/30 rounded-xl pt-6 pb-2 px-10 placeholder-transparent focus:outline-none focus:ring-2 focus:ring-white/60 transition-all"
+              placeholder="Password"
+              required
+            />
+            <Lock className="absolute left-3 top-1/2 text-white/40 peer-placeholder-shown:translate-y-0 -translate-y-3 transition-transform" />
+            <label
+              htmlFor="password"
+              className="absolute left-10 top-2 text-white/60 text-xs transition-all 
+                        peer-placeholder-shown:text-base peer-placeholder-shown:text-white/40 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2
+                        peer-focus:top-2 peer-focus:text-xs peer-focus:text-white peer-focus:-translate-y-0"
+            >
+              Password
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 text-white/40 peer-placeholder-shown:translate-y-0 -translate-y-3 transition-transform"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
 
-          {/* Submit Button */}
+          {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-primary text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-primary/90 transition"
             disabled={isLoggingIn}
+            className="w-full bg-white text-purple-600 font-semibold py-3 rounded-xl hover:bg-white/90 transition flex justify-center items-center gap-2"
           >
-            {isLoggingIn ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              'Sign In'
-            )}
+            {isLoggingIn ? <><Loader2 className="animate-spin h-5 w-5" /> Logging In...</> : 'Sign In'}
           </button>
         </form>
 
-        <p className="text-center text-white/70 mt-6">
-          Don&apos;t have an account?{' '}
-          <Link to="/signup" className="text-primary hover:underline">
-            Create account
+        {/* Footer */}
+        <p className="text-white/70 text-center mt-6">
+          Don't have an account?{' '}
+          <Link to="/signup" className="underline text-white hover:text-white/90">
+            Create Account
           </Link>
         </p>
       </div>

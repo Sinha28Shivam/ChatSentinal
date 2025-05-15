@@ -8,5 +8,9 @@
   },
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "framer-motion": "^12.6.5",
+    "redis": "^5.0.1"
+  }
 }

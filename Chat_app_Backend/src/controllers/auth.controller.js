@@ -1,7 +1,10 @@
 import { generateToken } from '../lib/utils.js';
+import jwt from 'jsonwebtoken';
+
 import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
 import cloudinary from "../lib/cloudinary.js"
+import { getRedisClient } from "../redisClient/redisClient.js";
 
 export const signup = async (req, res) => {
     const { fullName, email, password } = req.body;
@@ -27,11 +30,11 @@ export const signup = async (req, res) => {
             email,
             password:hashedPassword
         })
+        await newUser.save();
+        await generateToken(newUser._id, res);
 
         if(newUser){
             // Generate token
-            generateToken(newUser._id, res)
-            await newUser.save();
             
             res.status(201).json({
                 _id: newUser._id,
@@ -62,7 +65,7 @@ export const login = async (req, res) => {
         if(!isPassword){
             return res.status(400).json({message: 'Invalid credentials'});
         }
-        generateToken(user._id, res)
+        await generateToken(user._id, res); // changes, now async
 
         res.status(200).json({
             _id: user._id,
@@ -77,9 +80,29 @@ export const login = async (req, res) => {
     }
 };
 
-export const logout = (req, res) => {    
+export const logout = async (req, res) => {    
     try {
-        res.cookie("jwt", "" , {maxAge: 0})
+        const token = req.cookies.jwt;
+        // const userId = req.user._id;
+
+        if(!token){
+         return res.status(400).json({message: 'No token found'});   
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userId = decoded.userId;
+
+     
+            const RedisClient = await getRedisClient();
+            await RedisClient.del(`tokens:${userId}`);
+ 
+        res.cookie("jwt", "", {
+            maxAge: 0,
+            httpOnly: true,
+            sameSite: "strict",
+            secure: process.env.NODE_ENV !== 'development'
+        });
+        
         res.status(200).json({message: 'Logged out successfully'});
           
     } catch (error) {
