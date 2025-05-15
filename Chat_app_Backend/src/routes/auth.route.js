@@ -13,7 +13,7 @@ router.post('/login', login);
 
 
 // user logout route
-router.post('/logout', logout); 
+router.post('/logout', protectRoute, logout); 
 
 // user Update profile
 router.put('/update-profile', protectRoute, updateProfile)
@@ -22,5 +22,8 @@ router.get("/check", protectRoute, checkAuth);
 
 // Todo: add delete account route
 router.delete('/delete-account', protectRoute, deleteAccount);
+
+// Todo: add verify email route
+// router.post("/verify-email", verifyEmail)
 
 export default router;
