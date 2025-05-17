@@ -50,7 +50,7 @@ const ChatContainer = () => {
     <div className="flex-1 flex flex-col bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       <ChatHeader />
 
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3">
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3" style={{ maxHeight: "calc(90vh - 160px)" }}>
         <AnimatePresence>
           {messages.map((message) => {
             const isMe = message.senderId === authUser._id;
