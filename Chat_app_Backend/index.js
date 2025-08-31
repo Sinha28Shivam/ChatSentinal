@@ -9,7 +9,8 @@ import path from 'path';
 import {connectDB} from './src/lib/db.js';
 
 import authRoute from './src/routes/auth.route.js';
-import messageRoutes from './src/routes/message.route.js'
+import messageRoutes from './src/routes/message.route.js';
+import userRoutes from './src/routes/user.route.js';
 import { app, server } from './src/lib/socket.js';
 
 
@@ -41,7 +42,8 @@ app.use(
 
 // Routes
 app.use("/api/v0/auth", authRoute);
-app.use("/api/v0/messages", messageRoutes)
+app.use("/api/v0/messages", messageRoutes);
+app.use("/api/v0/users", userRoutes);
 
 if(process.env.NODE_ENV === "production"){
   app.use(express.static(path.join(__dirname, "../Chat_app_Frontend/dist")));

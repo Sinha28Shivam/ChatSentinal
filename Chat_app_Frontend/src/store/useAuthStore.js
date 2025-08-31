@@ -36,36 +36,48 @@ export const useAuthStore = create((set, get) => ({
     set({ isSigningUp: true });
     try {
       const res = await axiosInstance.post("/auth/signup", data);
-      set({ authUser: res.data });
-      toast.success("Account created successfully!");
+      // With email verification, user isn't automatically logged in
+      // We should show a message to check email instead
+      toast.success(res.data.message || "Account created successfully! Please check your email for verification.");
       console.log(res.data);
-      get().connectSocket();
-      
+      // Don't connect socket or set authUser here since we need verification first
+      return {
+        success: true,
+        userId: res.data._id
+      };
     } catch (error) {
-      toast.error(error.response.data.message || "Something went wrong!");
+      toast.error(error.response?.data?.message || "Something went wrong!");
+      console.error("Signup error:", error);
+      return { success: false };
     }finally{
         set({ isSigningUp: false });
     }
-    
   },
 
   login: async (data) => {
     set({ isLoggingIn: true});
     try {
       const res = await axiosInstance.post("/auth/login", data);
+      
+      // Check if email is verified
+      if (res.data.isVerified === false) {
+        toast.error("Please verify your email before logging in");
+        // Return userId so it can be used for verification or resending verification email
+        return { verified: false, userId: res.data.userId };
+      }
+      
       set({ authUser: res.data});
       toast.success("Logged in successfully!");
-      // console.log("Logged in successfully!");
-
       get().connectSocket();
+      return { verified: true };
 
     } catch (error) {
-      toast.error(error.response.data.message || "Something went wrong!");
-      
-    }finally{
-    set({ isLoggingIn: false });
+      toast.error(error.response?.data?.message || "Something went wrong!");
+      console.error("Login error:", error);
+      return { error: true };
+    } finally {
+      set({ isLoggingIn: false });
     }
-
   },
 
   logout: async () => {
@@ -137,7 +149,32 @@ export const useAuthStore = create((set, get) => ({
   },
   disconnectSocket: () => {
     if(get().socket?.connected) get().socket.disconnect();
+  },
+  
+  verifyEmail: async (userId, token, publicKey) => {
+    try {
+      const res = await axiosInstance.post("/auth/verify-email", { userId, token, publicKey });
+      set({ authUser: res.data });
+      toast.success("Email verified successfully!");
+      get().connectSocket();
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Verification failed. Please try again.");
+      console.error("Verification error:", error);
+      return false;
+    }
+  },
 
+  resendVerification: async (userId) => {
+    try {
+      await axiosInstance.post("/auth/resend-verification", { userId });
+      toast.success("Verification email resent successfully!");
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to resend verification email.");
+      console.error("Resend verification error:", error);
+      return false;
+    }
   }
 
 }));
