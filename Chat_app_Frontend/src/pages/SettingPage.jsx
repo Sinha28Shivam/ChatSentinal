@@ -21,6 +21,8 @@ const SettingPage = () => {
     window.location.href = "/"; // redirect to homepage after deletion
   };
 
+  
+
 
   return (
     <div className="h-screen container mx-auto px-4 pt-20 max-w-5xl">

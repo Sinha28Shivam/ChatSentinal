@@ -33,10 +33,9 @@ const MessageInput = () => {
     if (!text.trim() && !imagePreview) return;
 
     try {
-      await sendMessage({
-        text: text.trim(),
-        image: imagePreview,
-      });
+      // Send just the text - we need to update the store function to handle image later
+      await sendMessage(text.trim());
+      console.log("Message sent successfully");
 
       // Clear form
       setText("");
@@ -44,6 +43,7 @@ const MessageInput = () => {
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
       console.error("Failed to send message:", error);
+      toast.error("Failed to send message: " + (error.message || "Unknown error"));
     }
   };
 

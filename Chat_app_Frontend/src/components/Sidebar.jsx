@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
-import { Users, ChevronRight, Wifi, WifiOff } from "lucide-react";
+import { Users, ChevronRight, Wifi, WifiOff, Lock, AlertTriangle } from "lucide-react";
+import toast from "react-hot-toast";
 
 const Sidebar = () => {
   const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading } = useChatStore();
+  const [showingNoKeyUsers, setShowingNoKeyUsers] = useState(false);
   const { onlineUsers } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
 
@@ -16,7 +18,9 @@ const Sidebar = () => {
 
   const filteredUsers = showOnlineOnly
     ? users.filter((user) => onlineUsers.includes(user._id))
-    : users;
+    : showingNoKeyUsers 
+      ? users 
+      : users.filter((user) => user.publicKey);
 
   if (isUsersLoading) return <SidebarSkeleton />;
 
@@ -66,6 +70,25 @@ const Sidebar = () => {
           <span className="text-xs text-zinc-500 bg-base-300 px-2 py-1 rounded-full">
             {onlineUsers.length-1} online
           </span>
+          <motion.label 
+            whileTap={{ scale: 0.95 }}
+            className="cursor-pointer flex items-center gap-2 mt-2"
+          >
+            <input
+              type="checkbox"
+              checked={showingNoKeyUsers}
+              onChange={(e) => setShowingNoKeyUsers(e.target.checked)}
+              className="toggle toggle-xs toggle-warning"
+            />
+            <span className="text-xs flex items-center gap-1">
+              {showingNoKeyUsers ? (
+                <AlertTriangle className="size-3 text-amber-500" />
+              ) : (
+                <Lock className="size-3 text-green-500" />
+              )}
+              {showingNoKeyUsers ? "Show all users" : "Only secure users"}
+            </span>
+          </motion.label>
         </motion.div>
       </div>
 
@@ -79,7 +102,26 @@ const Sidebar = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.2 }}
-              onClick={() => setSelectedUser(user)}
+              onClick={() => {
+                if (!user.publicKey) {
+                  toast.error(
+                    "This user hasn't set up secure messaging yet. They need to log out and log back in.",
+                    { id: "missing-key-" + user._id, duration: 3000 }
+                  );
+                  
+                  // Still select the user but warn about limitations
+                  setSelectedUser(user);
+                  
+                  // Show a toast with additional info
+                  setTimeout(() => {
+                    toast("You can chat, but messages won't be encrypted", 
+                      { icon: "⚠️", id: "encryption-warning-" + user._id, duration: 5000 }
+                    );
+                  }, 1000);
+                } else {
+                  setSelectedUser(user);
+                }
+              }}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
               className={`
@@ -87,6 +129,7 @@ const Sidebar = () => {
                 hover:bg-base-300/50 transition-all
                 ${selectedUser?._id === user._id ? 
                   "bg-primary/10 ring-1 ring-primary/20" : ""}
+                ${!user.publicKey ? "opacity-70" : ""}
               `}
             >
               <div className="relative mx-auto lg:mx-0">
@@ -117,12 +160,22 @@ const Sidebar = () => {
               <div className="hidden lg:flex flex-col text-left min-w-0 flex-1">
                 <div className="font-medium truncate flex items-center justify-between">
                   <span>{user.fullName}</span>
-                  <ChevronRight className="size-4 text-zinc-400" />
+                  <div className="flex items-center gap-1">
+                    {user.publicKey ? (
+                      <Lock className="size-3 text-green-500" />
+                    ) : (
+                      <AlertTriangle className="size-3 text-amber-500" />
+                    )}
+                    <ChevronRight className="size-4 text-zinc-400" />
+                  </div>
                 </div>
                 <div className="text-sm flex items-center gap-1">
                   <span className={`inline-block size-2 rounded-full ${onlineUsers.includes(user._id) ? 'bg-green-500' : 'bg-zinc-500'}`} />
-                  <span className="text-zinc-400">
+                  <span className="text-zinc-400 flex items-center gap-1">
                     {onlineUsers.includes(user._id) ? "Online" : "Offline"}
+                    {!user.publicKey && (
+                      <span className="text-xs text-amber-500">(No encryption)</span>
+                    )}
                   </span>
                 </div>
               </div>

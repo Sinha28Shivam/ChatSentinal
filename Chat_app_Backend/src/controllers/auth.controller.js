@@ -3,50 +3,61 @@ import jwt from 'jsonwebtoken';
 
 import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
-import cloudinary from "../lib/cloudinary.js"
+import cloudinary from "../lib/cloudinary.js";
 import { getRedisClient } from "../redisClient/redisClient.js";
+import { generateVerificationToken } from '../lib/generateVerificationToken.js';
+import { sendVerificationEmail, sendWelcomeEmail } from '../lib/emailService.js';
 
 export const signup = async (req, res) => {
-    const { fullName, email, password } = req.body;
+    const { fullName, email, password, username } = req.body;
     try {
-
-        if(!fullName || !email || !password){
+        if(!fullName || !email || !password || !username){
             return res.status(400).json({ message: "Please fill in all fields" });
         }
         if(password.length < 6){
             return res.status(400).json({message: 'Password must be at least 6 characters long'});
         }  
 
-        const user = await User.findOne({ email })
-        if(user){ 
+        const existingUser = await User.findOne({ email });
+        if(existingUser){ 
             return res.status(400).json({message: 'Email already exists'});
+        }
+        
+        const existingUsername = await User.findOne({ username });
+        if(existingUsername) {
+            return res.status(400).json({message: 'Username already exists'});
         }
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
+        
+        // Generate verification token
+        const verificationToken = generateVerificationToken();
+        
+        // Set expiry for token (30 minutes)
+        const verificationTokenExpiry = new Date();
+        verificationTokenExpiry.setMinutes(verificationTokenExpiry.getMinutes() + 30);
 
         const newUser = new User({
             fullName,
             email,
-            password:hashedPassword
-        })
+            username,
+            password: hashedPassword,
+            verificationToken,
+            verificationTokenExpiry
+        });
+        
         await newUser.save();
-        await generateToken(newUser._id, res);
+        
+        // Send verification email
+        await sendVerificationEmail(email, verificationToken, fullName);
 
-        if(newUser){
-            // Generate token
-            
-            res.status(201).json({
-                _id: newUser._id,
-                fullName: newUser.fullName,
-                email: newUser.email,
-                profilePic: newUser.profilePic,
-            });
-        }
-        else{
-            return res.status(400).json({message: 'Invalid user data'});
-        }
-
+        res.status(201).json({
+            _id: newUser._id,
+            fullName: newUser.fullName,
+            email: newUser.email,
+            message: 'User registered successfully. Please check your email for verification.'
+        });
     } catch (error) {
         console.log("error in signup", error.message);
         res.status(500).json({message: 'Server Error'});
@@ -65,6 +76,16 @@ export const login = async (req, res) => {
         if(!isPassword){
             return res.status(400).json({message: 'Invalid credentials'});
         }
+        
+        // Check if the user has verified their email
+        if(!user.isVerified){
+            return res.status(401).json({
+                message: 'Please verify your email before logging in',
+                isVerified: false,
+                userId: user._id
+            });
+        }
+        
         await generateToken(user._id, res); // changes, now async
 
         res.status(200).json({
@@ -72,6 +93,8 @@ export const login = async (req, res) => {
             fullName: user.fullName,
             email: user.email,
             profilePic: user.profilePic,
+            isVerified: user.isVerified,
+            publicKey: user.publicKey
         });
 
     } catch (error) {
@@ -134,6 +157,31 @@ export const updateProfile = async(req, res) => {
         console.log("Error in update profile:", error);
         res.status(500).json({ message: "Internal server error" });
         
+    }
+};
+
+export const updatePublicKey = async(req, res) => {
+    try {
+        const { publicKey } = req.body;
+        const userId = req.user._id;
+        
+        if(!publicKey){
+            return res.status(400).json({ message: "Public key is required" });
+        }
+        
+        const updatedUser = await User.findByIdAndUpdate(
+            userId, 
+            { publicKey },
+            { new: true} 
+        );
+
+        res.status(200).json({
+            message: "Public key updated successfully",
+            publicKey: updatedUser.publicKey
+        });
+    } catch (error) {
+        console.log("Error in update public key:", error);
+        res.status(500).json({ message: "Failed to update public key" });
     }
 };
 

@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, Loader2, MessageSquare } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const { login, isLoggingIn } = useAuthStore();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await login(formData);
+    const result = await login(formData);
+    
+    if (result && result.verified === false && result.userId) {
+      // Redirect to verification page with userId
+      navigate('/verify-email', { state: { userId: result.userId } });
+    }
   };
 
   return (

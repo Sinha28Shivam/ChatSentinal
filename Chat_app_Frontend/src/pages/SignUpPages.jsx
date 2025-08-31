@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { Eye, EyeOff, Mail, Lock, User, Loader2, MessageSquare } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
@@ -10,13 +10,16 @@ const SignUpPages = () => {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
+    username: '',
     password: '',
   });
 
   const { signup, isSigningUp } = useAuthStore();
+  const navigate = useNavigate();
 
   const validateForm = () => {
     if (!formData.fullName.trim()) return toast.error('Full name is required');
+    if (!formData.username.trim()) return toast.error('Username is required');
     if (!formData.email.trim()) return toast.error('Email is required');
     if (!/\S+@\S+\.\S+/.test(formData.email)) return toast.error('Invalid email format');
     if (!formData.password || formData.password.length < 6)
@@ -24,9 +27,15 @@ const SignUpPages = () => {
     return true;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) signup(formData);
+    if (validateForm()) {
+      const result = await signup(formData);
+      if (result && result.success && result.userId) {
+        // Redirect to verification page with the userId
+        navigate('/verify-email', { state: { userId: result.userId } });
+      }
+    }
   };
 
   return (
@@ -63,6 +72,24 @@ const SignUpPages = () => {
               className="absolute left-0 top-1.5 text-white/70 text-sm transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-base peer-placeholder-shown:text-white/40 peer-focus:top-1.5 peer-focus:text-sm peer-focus:text-white"
             >
               Full Name
+            </label>
+          </div>
+
+          {/* Username */}
+          <div className="relative">
+            <input
+              type="text"
+              id="username"
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              className="peer w-full bg-transparent border-b border-white/40 text-white placeholder-transparent focus:outline-none focus:border-white transition-all pt-6 pb-2"
+              placeholder="username"
+            />
+            <label
+              htmlFor="username"
+              className="absolute left-0 text-sm text-white/60 top-2.5 transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-white/40 peer-focus:top-2.5 peer-focus:text-sm peer-focus:text-white"
+            >
+              Username
             </label>
           </div>
 
